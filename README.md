@@ -7,6 +7,10 @@
     <li>
         Für Fragen zu den Mods kann man sich gerne bei mir auf Discord melden (dully_new). Ich werde dann zeitnahe Antworten.
     </li>
+    <li>
+        Noch kein Mitglied eines Clans? Schau doch gerne mal bei uns vorbei ^^ (https://eu.wargaming.net/clans/wot/500063112/).
+        Alles was du brauchst ist Discord und Humor. Schreib uns am besten Ingame an wir reagieren dann zeitnahe.
+    </li>
 </ul>
 
 ## dully_names
@@ -102,7 +106,7 @@
         <tr>
             <td>USA</td>
             <td>Eagle 7</td>
-            <td>Eagle</td>
+            <td>3agle</td>
             <td>Das Clanmaskottchen.</td>
         </tr>
         <tr>
