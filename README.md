@@ -1,4 +1,15 @@
-# dullywotmod
+# Die Dulligen World of Tanks Mods
+
+<ul>
+    <li>
+        Die hier bereitgestellten Modifikationen für das Spiel World of Tanks enthalten Namen und Insider-Witze des Eagle Clans und können daher von außenstehenden missverstanden werden. 
+    </li>
+    <li>
+        Für Fragen zu den Mods kann man sich gerne bei mir auf Discord melden (dully_new). Ich werde dann zeitnahe Antworten.
+    </li>
+</ul>
+
+## dully_names
 
 <table>
     <thead>
@@ -89,10 +100,10 @@
             <td>Die bessere Höllenkatze.</td>
         </tr>
         <tr>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
+            <td>USA</td>
+            <td>Eagle 7</td>
+            <td>Eagle</td>
+            <td>Das Clanmaskottchen.</td>
         </tr>
         <tr>
             <td></td>
