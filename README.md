@@ -2,7 +2,7 @@
 
 <ul>
     <li>
-        Die hier bereitgestellten Modifikationen für das Spiel World of Tanks enthalten Namen und Insider-Witze des Eagle Clans und können daher von außenstehenden missverstanden werden. 
+        Die hier bereitgestellten Modifikationen für das Spiel World of Tanks enthalten Namen und Insider-Witze des 3agle Clans und können daher von außenstehenden missverstanden werden. 
     </li>
     <li>
         Für Fragen zu den Mods kann man sich gerne bei mir auf Discord melden (dully_new). Ich werde dann zeitnahe Antworten.
