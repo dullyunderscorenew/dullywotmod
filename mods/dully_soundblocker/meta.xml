@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-    <id>dully_names</id>
+    <id>dully_soundblocker</id>
     <version>1.0.0</version>
     <name>Dully Quick Command Blocker</name>
     <description>Blockiert bestimmte Crew-Voices</description>
     <scripts>
         <script>mod_dully_notify_soundblocker</script>
-        <script>mod_dully_ui_probe</script>
     </scripts>
 </root>
 
