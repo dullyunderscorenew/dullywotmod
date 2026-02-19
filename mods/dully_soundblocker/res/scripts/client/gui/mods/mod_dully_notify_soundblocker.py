@@ -1,17 +1,26 @@
-# -*- coding: utf-8 -*-
 from __future__ import print_function
-import os
-import json
-import traceback
+# -------------------------
+# modul-name fuer debug
+# -------------------------
+_MOD = '[DULLY_SOUNDBLOCKER]'
+print(_MOD, 'Starte Initialisierung...')
+
 
 # -------------------------
-# Modul-Header
+# imports
 # -------------------------
-_MOD = '[DULLY]'
-print(_MOD, 'mod_dully_soundblocker importiert — init')
+try: 
+   
+    import os, json, BigWorld, traceback, ResMgr
+    from messenger_common_chat2 import BATTLE_CHAT_COMMANDS_BY_NAMES
+    from avatar_components.avatar_chat_key_handling import AvatarChatKeyHandling
+except Exception:
+    print(_MOD, 'fehler beim importieren; mod wird nicht geladen')
+    raise
+
 
 # -------------------------
-# CONFIG Pfad (robust)
+# config pfad 
 # -------------------------
 def _get_mods_root():
     try:
@@ -29,31 +38,30 @@ def _get_mods_root():
 _MODS_ROOT = _get_mods_root()
 _CONFIG_DIR = os.path.join(_MODS_ROOT, 'configs', 'dully')
 _SETTINGS_PATH = os.path.join(_CONFIG_DIR, 'dully_soundblocker_settings.json')
-print(_MOD, 'Config dir =', _CONFIG_DIR)
+print(_MOD, 'config =', _SETTINGS_PATH)
 
 # -------------------------
-# Notifications discovery
+# notifications sammeln
 # -------------------------
-try:
-    from messenger_common_chat2 import BATTLE_CHAT_COMMANDS_BY_NAMES
-except Exception:
-    BATTLE_CHAT_COMMANDS_BY_NAMES = {}
-
 def _build_all_notifications():
     names = []
     try:
         for name, data in BATTLE_CHAT_COMMANDS_BY_NAMES.items():
-            sn = getattr(data, 'soundNotification', None)
-            sr = getattr(data, 'soundNotificationReply', None)
-            if sn and sn not in names:
-                names.append(sn)
-            if sr and sr not in names:
-                names.append(sr)
+            d_sound = getattr(data, 'soundNotification', None)
+            d_sreply = getattr(data, 'soundNotificationReply', None)
+            if d_sound and d_sound not in names:
+                names.append(d_sound)
+            if d_sreply and d_sreply not in names:
+                names.append(d_sreply)
     except Exception:
         pass
-    # Ergänze mit einer kleinen, sinnvollen Default-Liste
-    defaults = ['ibc_ping_retreat', 'ibc_ping_attention',
-                'ibc_ping_help_me_ex', 'ibc_ping_request', 'ibc_ping_reply', 'ibc_ping_thanks']
+    # defaults
+    defaults = ['ibc_ping_retreat', 
+                'ibc_ping_attention',
+                'ibc_ping_help_me_ex', 
+                'ibc_ping_request', 
+                'ibc_ping_reply', 
+                'ibc_ping_thanks']
     for d in defaults:
         if d not in names:
             names.append(d)
@@ -62,7 +70,7 @@ def _build_all_notifications():
 ALL_NOTIFICATIONS = _build_all_notifications()
 
 # -------------------------
-# Default blocked (initial)
+# defaults blocked
 # -------------------------
 _DEFAULT_BLOCKED = {
     'ibc_ping_retreat': True,
@@ -70,39 +78,37 @@ _DEFAULT_BLOCKED = {
     'ibc_ping_help_me_ex': True
 }
 
-# runtime mapping: True == BLOCKIERT
 BANNED = {}
 _pending_changes = False
 
 # -------------------------
-# load / save
+# load / save config
 # -------------------------
 def load_settings():
     global BANNED, _pending_changes
     try:
-        BANNED = {n: False for n in ALL_NOTIFICATIONS}
-        for k, v in _DEFAULT_BLOCKED.items():
-            if k in BANNED:
-                BANNED[k] = bool(v)
+        BANNED = {option: False for option in ALL_NOTIFICATIONS}
+        for option, wert in _DEFAULT_BLOCKED.items():
+            if option in BANNED:
+                BANNED[option] = bool(wert)
         if not os.path.isdir(_CONFIG_DIR):
-            try:
-                os.makedirs(_CONFIG_DIR)
-            except Exception:
-                pass
+            os.makedirs(_CONFIG_DIR)
         if os.path.isfile(_SETTINGS_PATH):
             try:
-                with open(_SETTINGS_PATH, 'r') as f:
-                    data = json.load(f)
-                for k, v in data.items():
-                    if k in BANNED:
-                        BANNED[k] = bool(v)
+                # oeffne datei mit read
+                with open(_SETTINGS_PATH, 'r') as datei:
+                    data = json.load(datei)
+                for option, wert in data.items():
+                    if option in BANNED:
+                        BANNED[option] = bool(wert)
                 _pending_changes = False
                 print(_MOD, 'Einstellungen geladen von:', _SETTINGS_PATH)
             except Exception:
                 print(_MOD, 'Fehler beim Parsen der Einstellungsdatei; Standardwerte verwendet')
                 traceback.print_exc()
         else:
-            print(_MOD, 'Keine Einstellungsdatei gefunden; Standardwerte verwendet')
+            print(_MOD, 'Keine Einstellungsdatei gefunden; Standardwerte verwendet und gespeichert')
+            save_settings()
     except Exception:
         print(_MOD, 'Fehler beim Laden der Einstellungen')
         traceback.print_exc()
@@ -112,48 +118,32 @@ def save_settings():
     try:
         if not os.path.isdir(_CONFIG_DIR):
             os.makedirs(_CONFIG_DIR)
-        with open(_SETTINGS_PATH, 'w') as f:
-            json.dump(BANNED, f, indent=2, sort_keys=True)
+        # oeffne datei mit write
+        with open(_SETTINGS_PATH, 'w') as datei:    
+            # ident=2: rueckt zeilen ein, sort_keys=true: sortiert die keys alphabetisch 
+            json.dump(BANNED, datei, indent=2, sort_keys=True)
         _pending_changes = False
         print(_MOD, 'Einstellungen gespeichert nach:', _SETTINGS_PATH)
     except Exception:
         print(_MOD, 'Fehler beim Speichern der Einstellungen')
         traceback.print_exc()
 
-def set_notification_enabled_runtime(name, enabled):
-    """ enabled=True bedeutet: ERLAUBT (nicht geblockt).
-        Wir speichern intern als BANNED[name] = not enabled """
-    global _pending_changes
-    if name not in BANNED:
-        print(_MOD, 'Unbekannter Notification-Name:', name)
-        return
-    BANNED[name] = not bool(enabled)
-    _pending_changes = True
-    print(_MOD, 'Runtime: %s ist jetzt %s' % (name, 'BLOCKIERT' if BANNED[name] else 'ERLAUBT'))
+# def set_notification_enabled_runtime(name, enabled):
+#     global _pending_changes
+#     if name not in BANNED:
+#         print(_MOD, 'Unbekannter Notification-Name:', name)
+#         return
+#     BANNED[name] = not bool(enabled)
+#     _pending_changes = True
+#     print(_MOD, 'Runtime: %s ist jetzt %s' % (name, 'BLOCKIERT' if BANNED[name] else 'ERLAUBT'))
 
 # -------------------------
 # Hook: AvatarChatKeyHandling.__playSoundNotification
 # -------------------------
-try:
-    from avatar_components.avatar_chat_key_handling import AvatarChatKeyHandling
-    _HAS_AVATAR = True
-except Exception:
-    AvatarChatKeyHandling = None
-    _HAS_AVATAR = False
 
-def install_playSound_hook():
-    if not _HAS_AVATAR or AvatarChatKeyHandling is None:
-        print(_MOD, 'AvatarChatKeyHandling nicht gefunden — Hook wird nicht installiert')
-        return
+def init_hook_soundblocker():
     mangled = '_AvatarChatKeyHandling__playSoundNotification'
-    if not hasattr(AvatarChatKeyHandling, mangled):
-        print(_MOD, 'Methode %s nicht vorhanden in AvatarChatKeyHandling' % mangled)
-        return
-    try:
-        original = getattr(AvatarChatKeyHandling, mangled)
-    except Exception:
-        print(_MOD, 'Kann Originalmethode nicht bekommen')
-        return
+    original = getattr(AvatarChatKeyHandling, mangled)
 
     def hooked(self, notification, sndPos=None, enableVoice=True, isSentByPlayer=True):
         try:
@@ -167,11 +157,7 @@ def install_playSound_hook():
         except Exception:
             print(_MOD, 'Fehler im Hook; rufe Original auf')
             traceback.print_exc()
-            try:
-                return original(self, notification, sndPos, enableVoice, isSentByPlayer)
-            except Exception:
-                return None
-
+            return original(self, notification, sndPos, enableVoice, isSentByPlayer)
     try:
         setattr(AvatarChatKeyHandling, mangled, hooked)
         print(_MOD, 'Hook installiert auf', mangled)
@@ -180,98 +166,10 @@ def install_playSound_hook():
         traceback.print_exc()
 
 # -------------------------
-# Settings UI integration (sicherer Weg)
-# - 1) erweitere SettingsParams.getFeedbackSettings (nur Anzeige)
-# - 2) intercept SettingsWindow._applySettings um DULLY keys herauszufiltern und selbst zu speichern
-# -------------------------
-try:
-    from gui.Scaleform.daapi.view.common.settings.SettingsParams import SettingsParams
-    _HAS_SETTINGSPARAMS = True
-except Exception:
-    SettingsParams = None
-    _HAS_SETTINGSPARAMS = False
-
-try:
-    from gui.Scaleform.daapi.view.common.settings.SettingsWindow import SettingsWindow
-    _HAS_SETTINGSWINDOW = True
-except Exception:
-    SettingsWindow = None
-    _HAS_SETTINGSWINDOW = False
-
-# patch SettingsParams.getFeedbackSettings: füge Gruppe 'DULLY_SOUND_BLOCKER' ein (Anzeige)
-if _HAS_SETTINGSPARAMS and SettingsParams is not None:
-    try:
-        _orig_getFeedback = SettingsParams.getFeedbackSettings
-
-        def _dully_getFeedbackSettings(self):
-            data = _orig_getFeedback(self)
-            # dully_container: mapping notif_name -> { 'value': <bool allowed>, 'default': <bool> }
-            dully_container = {}
-            for n in ALL_NOTIFICATIONS:
-                dully_container[n] = {'value': (not BANNED.get(n, False)), 'default': True}
-            # Insert with a unique key. UI zeigt keys as sections.
-            data['DULLY_SOUND_BLOCKER'] = dully_container
-            # Debug
-            print(_MOD, 'SettingsParams.getFeedbackSettings erweitert (DULLY_SOUND_BLOCKER)')
-            return data
-
-        SettingsParams.getFeedbackSettings = _dully_getFeedbackSettings
-    except Exception:
-        print(_MOD, 'Fehler beim Patchen von SettingsParams.getFeedbackSettings')
-        traceback.print_exc()
-else:
-    print(_MOD, 'SettingsParams nicht verfügbar — UI-Integration übersprungen')
-
-# patch SettingsWindow._applySettings: entferne DULLY keys aus diff und handle sie selbst
-if _HAS_SETTINGSWINDOW and SettingsWindow is not None:
-    try:
-        _orig__applySettings = SettingsWindow._applySettings
-
-        def _dully__applySettings(self, settings, isCloseWnd):
-            # settings ist ein dict; prüfe auf DULLY_SOUND_BLOCKER Key
-            try:
-                if isinstance(settings, dict) and 'DULLY_SOUND_BLOCKER' in settings:
-                    try:
-                        dully_section = settings.pop('DULLY_SOUND_BLOCKER')
-                        # dully_section erwartet mapping notif -> value (bool) OR {notif: value} depending on frontend
-                        # handle both shapes: if nested dicts, try to get values
-                        for notif, val in dully_section.items():
-                            # val könnte dict {'value': True} oder True/False
-                            if isinstance(val, dict):
-                                # frontend sendet typischerweise { 'value': True }
-                                v = val.get('value', val.get('default', True))
-                            else:
-                                v = val
-                            # v == True means ALLOWED -> BANNED = not v
-                            BANNED[notif] = not bool(v)
-                        # persist immediately
-                        save_settings()
-                        print(_MOD, 'DULLY_SETTINGS angewendet und gespeichert')
-                    except Exception:
-                        print(_MOD, 'Fehler beim Anwenden der DULLY Sektion')
-                        traceback.print_exc()
-                # now call original with filtered settings
-            except Exception:
-                traceback.print_exc()
-            # finally call original method (works with remaining settings)
-            try:
-                return _orig__applySettings(self, settings, isCloseWnd)
-            except Exception:
-                print(_MOD, 'Fehler im originalen _applySettings nach DULLY-Handling')
-                traceback.print_exc()
-        SettingsWindow._applySettings = _dully__applySettings
-        print(_MOD, 'SettingsWindow._applySettings gepatcht (DULLY interception)')
-    except Exception:
-        print(_MOD, 'Fehler beim Patchen von SettingsWindow._applySettings')
-        traceback.print_exc()
-else:
-    print(_MOD, 'SettingsWindow nicht verfügbar — apply-interception übersprungen')
-
-# -------------------------
 # Initialisierung
 # -------------------------
 load_settings()
-install_playSound_hook()
+init_hook_soundblocker()
 print(_MOD, 'Initialisierung abgeschlossen')
 
 # Convenience-API exposed for console usage
